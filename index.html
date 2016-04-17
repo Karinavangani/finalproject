@@ -15,74 +15,12 @@
 
 </head>
 
-<style>
- h1{
-  text-align: center;
-}
-body { margin:0; padding:0; font-family: 'Slabo 27px', serif}
-  #map { 
-     width:100%; 
-    height: 500px;
-    font-color:#8dd3c7
-  }
-
-  #infoWindow{
-    font-size: 20px;
-    padding: 6px 8px;
-    background: #1b9e77;
-    margin-left: 20px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    border-radius: 5px;
-  }
- 
- .sidebar-wrapper {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  }
-  #sidebar {
-  width: 250px;
-  height: 100%;
-  max-width: 100%;
-  float: left;
-  -webkit-transition: all 0.25s ease-out;
-    -moz-transition: all 0.25s ease-out;
-    transition: all 0.25s ease-out;
-}
-.sidebar-table {
-  position: absolute;
-  width: 100%;
-  top: 103px;
-  bottom: 0px;
-  overflow: auto;
-}
-.navbar-header a.navbar-icon {
-  margin-left: 25px;
-}
- p{
-font-family: 'Slabo 27px', serif;
-padding:10px;
-margin: 0 auto;
-font-color: #8dd3c7;
-}
-
-.legend {
-    line-height: 18px;
-    color: #555;
-}
-.legend i {
-    width: 18px;
-    height: 18px;
-    float: left;
-    margin-right: 8px;
-    opacity: 0.7;
-}
-
-  </style>
 <body>
 <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
 <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+<script src="js/script.js"></script>
 <body>
+ //Part taken from Bootleaf by Brian Mcbride
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container-fluid">
         <div class="navbar-header">
@@ -114,7 +52,6 @@ font-color: #8dd3c7;
 <p>
 With a Population of 1.2 billion people, that is bound to rise even more, India faces massive energy needs and demand is often higher than supply. The country's energy consumption has doubled since 2000 and is also resposible for almost 10 % increase in global energy demand since then. India is likely to add 600 GW to 1200 GW of additional new power generation capacity before Year 2050. Here's a look at the the State-wise potential of Various Reneable Energy Technologies. Click on the Respective Tabs!
 <P>
-
 <div class="btn-group btn-group-justified" role="group" aria-label="...">
 
   <div class="btn-group" role="group">
@@ -124,17 +61,22 @@ With a Population of 1.2 billion people, that is bound to rise even more, India 
     <button type="button" class="btn btn-default" id='small_hydropower'>Small Hydro Power</button>
   </div>
   <div class="btn-group" role="group">
-    <button type="button" class="btn btn-default">Bio-Energy-Bagase Cogereneration</button>
+    <button type="button" class="btn btn-default" id="bioenergy_biomasspower">Bio-Energy-Bio Mass Power</button>
+  </div>
+   <div class="btn-group" role="group">
+    <button type="button" class="btn btn-default" id="bioenergy_bagasecogeneration">Bio-Energy- Bagase Cognerat</button>
   </div>
   <div class="btn-group" role="group">
-    <button type="button" class="btn btn-default">Bio-Energy-Waste to Energy</button>
+    <button type="button" class="btn btn-default" id="bioenergy_wastetoenergy">Bio-Energy-Waste to Energy</button>
   </div>
 </div>
 
 <div id="map"></div>
 <div id="infoWindow"></div>
 <script type="text/javascript">
- var osmLink = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+var geojson;
+      
+var osmLink = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
     thunLink = '<http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
 
     var osmUrl =' http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
@@ -142,11 +84,9 @@ With a Population of 1.2 billion people, that is bound to rise even more, India 
     landUrl = 'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
     thunAttrib = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>';
 
-    var osmMap = L.tileLayer(osmUrl, {attribution: osmAttrib}),
-       landMap = L.tileLayer(landUrl, {attribution: thunAttrib});
-
-   
-    var map = L.map('map', {layers: [osmMap] }).setView([21.534847,78.574219], 5);
+  var osmMap = L.tileLayer(osmUrl, {attribution: osmAttrib}),
+    landMap = L.tileLayer(landUrl, {attribution: thunAttrib});
+  var map = L.map('map', {layers: [osmMap] }).setView([21.534847,78.574219], 5);
 
     var baseLayers = {
           "Light": osmMap,
@@ -154,21 +94,18 @@ With a Population of 1.2 billion people, that is bound to rise even more, India 
         };
 
 L.control.layers(baseLayers).addTo(map);
+      
 
-// var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-//   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
-// });
-
-
-//       var map = L.map('map', {
-//         scrollWheelZoom: false,
-//         center: [21.534847,78.574219],
-//         zoom: 5
-//       });
-//       map.addLayer(layer);
-      var geojson;
-
-      function getColor(w) {
+       function zoomToFeature(e) {
+      map.fitBounds(e.target.getBounds());
+        }
+        function resetHighlight(e) {
+        geojson.resetStyle(e.target);
+      
+                }
+        
+     // for wind power
+      function getColor1(w) {
         return w > 20000 ? '#034e7b' :
                w > 10000 ? '#0570b0':
                w >  5000 ? '#3690c0' :
@@ -178,13 +115,13 @@ L.control.layers(baseLayers).addTo(map);
                // m > 10   ? '#FED976' :
                           '#f1eef6';
           }
-         function style(feature) {
+         function style1(feature) {
         console.log(feature);
 
        console.log(parseInt(feature.properties.wind_power))
 
         return {
-        fillColor: getColor(parseInt(feature.properties.wind_power)),
+        fillColor: getColor1(parseInt(feature.properties.wind_power)),
         weight: 2,
         opacity: 1,
         color: 'white',
@@ -192,6 +129,32 @@ L.control.layers(baseLayers).addTo(map);
         fillOpacity: 0.7
             };
            }
+     
+      function highlightFeature1(e) {
+        var layer = e.target;
+            layer.setStyle({
+            weight: 5,
+            color: '#f7fcb9',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+            
+          $('#infoWindow').text('The State of '+layer.feature.properties.ST_NAME+'-'+layer.feature.properties.wind_power+'MW');
+        }
+        
+        function onEachFeature1(feature, layer) {
+            layer.on({
+           mouseover: highlightFeature1,
+           mouseout: resetHighlight,
+           click: zoomToFeature
+           
+                    });
+                  }
+
            // for small hydro power
            function getColor2(w) {
         return w >  2000 ? '#4a1486' :
@@ -203,7 +166,8 @@ L.control.layers(baseLayers).addTo(map);
                // m > 10   ? '#FED976' :
                           '#f2f0f7';
           }
-           function style2(feature) {
+
+       function style2(feature) {
         console.log(feature);
 
        console.log(parseInt(feature.properties.small_hydropower))
@@ -217,11 +181,8 @@ L.control.layers(baseLayers).addTo(map);
         fillOpacity: 0.7
             };
            }
-      function zoomToFeature(e) {
-      map.fitBounds(e.target.getBounds());
-        }
-
-      function highlightFeature(e) {
+      
+       function highlightFeature2(e) {
         var layer = e.target;
             layer.setStyle({
             weight: 5,
@@ -233,16 +194,159 @@ L.control.layers(baseLayers).addTo(map);
         if (!L.Browser.ie && !L.Browser.opera) {
             layer.bringToFront();
         }
-             // console.log(layer.feature.properties.name);
-          $('#infoWindow').text('The State of '+layer.feature.properties.ST_NAME+'-'+layer.feature.properties.wind_power+'MW');
+            
+          $('#infoWindow').text('The State of '+layer.feature.properties.ST_NAME+'-'+layer.feature.properties.small_hydropower+'MW');
         }
-        function resetHighlight(e) {
-        geojson.resetStyle(e.target);
-      
-                }
-        function onEachFeature(feature, layer) {
+        function onEachFeature2(feature, layer) {
             layer.on({
-           mouseover: highlightFeature,
+           mouseover: highlightFeature2,
+           mouseout: resetHighlight,
+           click: zoomToFeature
+           
+                    });
+                  }
+          // for biomass bioenergy
+        function getColor3(w) {
+        return w >  1500 ? '#99000d' :
+               w >  1000 ? '#cb181d':
+               w >   500 ? '#ef3b2c' :
+               w >   100 ? '#fb6a4a' :
+               w >    50 ? '#fc9272' :
+               w >     1 ? '#fcbba1' :
+               // m > 10   ? '#FED976' :
+                          '#fee5d9';
+          }
+
+       function style3(feature) {
+        console.log(feature);
+
+       console.log(parseInt(feature.properties.bioenergy_biomasspower))
+
+        return {
+        fillColor: getColor3(parseInt(feature.properties.bioenergy_biomasspower)),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+            };
+           }
+      
+      function highlightFeature3(e) {
+        var layer = e.target;
+            layer.setStyle({
+            weight: 5,
+            color: '#f7fcb9',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+            
+          $('#infoWindow').text('The State of '+layer.feature.properties.ST_NAME+'-'+layer.feature.properties.bioenergy_biomasspower+'MW');
+        }
+        function onEachFeature3(feature, layer) {
+            layer.on({
+           mouseover: highlightFeature3,
+           mouseout: resetHighlight,
+           click: zoomToFeature
+           
+                    });
+                  }
+         // for bioenergy-bagasecogeneration
+        function getColor4(w) {
+        return w >  1000 ? '#006d2c' :
+               w >   500 ? '#31a354':
+               w >   100 ? '#74c476' :
+               w >     1 ? '#bae4b3' :
+               // m > 10   ? '#FED976' :
+                          '#edf8e9';
+          }
+
+       function style4(feature) {
+        console.log(feature);
+
+       console.log(parseInt(feature.properties.bioenergy_bagasecogeneration))
+
+        return {
+        fillColor: getColor4(parseInt(feature.properties.bioenergy_bagasecogeneration)),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+            };
+           }
+      
+      function highlightFeature4(e) {
+        var layer = e.target;
+            layer.setStyle({
+            weight: 5,
+            color: '#f7fcb9',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+            
+          $('#infoWindow').text('The State of '+layer.feature.properties.ST_NAME+'-'+layer.feature.properties.bioenergy_bagasecogeneration+'MW');
+        }
+        function onEachFeature4(feature, layer) {
+        layer.on({
+           mouseover: highlightFeature4,
+           mouseout: resetHighlight,
+           click: zoomToFeature
+           
+                    });
+                  }
+                
+         // for bioenergy-waste to energy
+        function getColor5(w) {
+        return w >   500 ? '#980043' :
+               w >   100 ? '#dd1c77':
+               w >    50 ? '#df65b0' :
+               w >     1 ? '#d7b5d8' :
+               // m > 10   ? '#FED976' :
+                          '#f1eef6';
+          }
+
+       function style5(feature) {
+        console.log(feature);
+
+       console.log(parseInt(feature.properties.bioenergy_wastetoenergy))
+
+        return {
+        fillColor: getColor5(parseInt(feature.properties.bioenergy_wastetoenergy)),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+            };
+           }
+      
+      function highlightFeature5(e) {
+        var layer = e.target;
+            layer.setStyle({
+            weight: 5,
+            color: '#f7fcb9',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+            
+          $('#infoWindow').text('The State of '+layer.feature.properties.ST_NAME+'-'+layer.feature.properties.bioenergy_wastetoenergy+'MW');
+        }
+        function onEachFeature5(feature, layer) {
+        layer.on({
+           mouseover: highlightFeature5,
            mouseout: resetHighlight,
            click: zoomToFeature
            
@@ -254,8 +358,8 @@ L.control.layers(baseLayers).addTo(map);
         $('#wind_power').click(function(){
       
       geojson=L.geoJson(renewable_data,{
-        style: style,
-        onEachFeature:onEachFeature
+        style: style1,
+        onEachFeature:onEachFeature1
       }).addTo(map);
 
       });
@@ -270,7 +374,7 @@ L.control.layers(baseLayers).addTo(map);
 
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
-            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            '<i style="background:' + getColor1(grades[i] + 1) + '"></i> ' +
             grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
     }
 
@@ -278,17 +382,69 @@ L.control.layers(baseLayers).addTo(map);
       };
 
     legend.addTo(map);
-      });//Closing the windpower button
 
-      // Starting Small Hydro Power Map
-     $('small_hydropower').click(function(){
+
+     // Starting Small Hydro Power Map
+     $('#small_hydropower').click(function(){
+      console.log('click!')
+      map.removeLayer(geojson)
       
       geojson=L.geoJson(renewable_data,{
         style: style2,
-        onEachFeature:onEachFeature
+        onEachFeature:onEachFeature2
       }).addTo(map);
     
-      });
+      });//closing small hydropower
+     
+    //  var legend2 = L.control({position: 'bottomright'});
+
+    //  legend2.onAdd = function (map) {
+
+    // var div = L.DomUtil.create('div', 'infoWindow legend2'),
+    //     grades = [0,1, 50, 100, 500, 1000, 2000 ],
+    //     labels = [];
+
+    // for (var j = 0; j < grades.length; j++) {
+    //     div.innerHTML +=
+    //         '<j style="background:' + getColor2(grades[i] + 1) + '"></j> ' +
+    //         grades[j] + (grades[j + 1] ? '&ndash;' + grades[j + 1] + '<br>' : '+');
+    // }
+
+    // return div;
+    //   };
+
+    // legend2.addTo(map);
+     
+     $('#bioenergy_biomasspower').click(function(){
+      console.log('click!')
+      map.removeLayer(geojson)
+      geojson=L.geoJson(renewable_data,{
+        style: style3,
+        onEachFeature:onEachFeature3
+      }).addTo(map);
+    
+      });//cLosing bioenergy masspower
+     $('#bioenergy_bagasecogeneration').click(function(){
+      console.log('click!')
+      map.removeLayer(geojson)
+      geojson=L.geoJson(renewable_data,{
+        style: style4,
+        onEachFeature:onEachFeature4
+      }).addTo(map);
+    
+      });//cLosing bioenergy -bagase
+     //st
+     $('#bioenergy_wastetoenergy').click(function(){
+      console.log('click!')
+      map.removeLayer(geojson)
+      geojson=L.geoJson(renewable_data,{
+        style: style5,
+        onEachFeature:onEachFeature5
+      }).addTo(map);
+    
+      });// closing bioenergy waste to energy
+      });//Closing the windpower button
+
 
 </script>
 </body>
